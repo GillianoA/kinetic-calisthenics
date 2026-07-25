@@ -253,7 +253,83 @@ values (
   'automatic'
 );
 
-select extensions.plan(37);
+-- A transaction-local probe proves the hardened default ACL is applied to
+-- functions created after the migration, not only to the enumerated objects.
+create function public._test_security_definer_acl_default()
+returns boolean
+language sql
+security definer
+set search_path = ''
+as $$
+  select true;
+$$;
+
+select extensions.plan(39);
+
+select extensions.ok(
+  not exists (
+    select 1
+    from pg_catalog.pg_proc as function_row
+    join pg_catalog.pg_namespace as namespace
+      on namespace.oid = function_row.pronamespace
+    where namespace.nspname = 'public'
+      and function_row.prosecdef
+      and pg_catalog.has_function_privilege(
+        'anon',
+        function_row.oid,
+        'EXECUTE'
+      )
+  ),
+  'no public-schema security-definer function is executable by anon, including through PUBLIC or inherited grants'
+);
+
+select extensions.ok(
+  not exists (
+    select 1
+    from pg_catalog.pg_proc as function_row
+    join pg_catalog.pg_namespace as namespace
+      on namespace.oid = function_row.pronamespace
+    where namespace.nspname = 'public'
+      and function_row.prosecdef
+      and (
+        pg_catalog.has_function_privilege(
+          'authenticated',
+          function_row.oid,
+          'EXECUTE'
+        ) is distinct from (
+          function_row.oid = any(array[
+            'public.is_active_partner(uuid,uuid)'::regprocedure::oid,
+            'public.can_view_content(uuid,public.content_visibility,uuid)'::regprocedure::oid,
+            'public.can_view_workout(uuid,uuid)'::regprocedure::oid,
+            'public.owns_workout(uuid,uuid)'::regprocedure::oid,
+            'public.owns_workout_exercise(uuid,uuid)'::regprocedure::oid,
+            'public.owns_template(uuid,uuid)'::regprocedure::oid,
+            'public.owns_template_exercise(uuid,uuid)'::regprocedure::oid,
+            'public.can_view_skill(uuid,uuid)'::regprocedure::oid,
+            'public.can_view_exercise(uuid,uuid)'::regprocedure::oid,
+            'public.can_manage_skill(uuid,uuid)'::regprocedure::oid,
+            'public.can_log_skill(uuid,uuid)'::regprocedure::oid,
+            'public.can_view_challenge(uuid,uuid)'::regprocedure::oid,
+            'public.can_join_challenge(uuid,uuid)'::regprocedure::oid,
+            'public.can_view_activity(uuid,uuid)'::regprocedure::oid,
+            'public.is_partner_visible_media_reference(text,uuid,uuid)'::regprocedure::oid,
+            'public.create_friend_invite(interval)'::regprocedure::oid,
+            'public.accept_friend_invite(text)'::regprocedure::oid,
+            'public.disconnect_friend(uuid)'::regprocedure::oid,
+            'public.get_my_partner_id()'::regprocedure::oid,
+            'public.get_partner_measurement_summary(uuid,timestamptz,timestamptz)'::regprocedure::oid,
+            'public.save_workout_with_exercises(jsonb,uuid)'::regprocedure::oid,
+            'public.get_accountability_targets()'::regprocedure::oid,
+            'public.get_partner_measurement_photo_refs(uuid)'::regprocedure::oid,
+            'public.send_encouragement(text)'::regprocedure::oid
+          ])
+        )
+      )
+  ),
+  'authenticated can execute exactly the RLS helpers and application RPCs'
+);
+
+drop function public._test_security_definer_acl_default();
 
 set local role authenticated;
 select set_config(
