@@ -31,6 +31,7 @@ import { activityDetailToDisplay } from "@/lib/activity-format";
 import {
   Avatar,
   Button,
+  EmptyState,
   GlassCard,
   PageHeader,
   ProgressRing,
@@ -348,10 +349,15 @@ export function CompareView({
           <SectionHeader
             title="Shared challenges"
             description="Make consistency collaborative"
-            action={<StatusPill tone="success">2 active</StatusPill>}
+            action={
+              <StatusPill tone={challenges.length ? "success" : "neutral"}>
+                {challenges.length} active
+              </StatusPill>
+            }
           />
-          <div className="space-y-4">
-            {challenges.map((challenge) => (
+          {challenges.length ? (
+            <div className="space-y-4">
+              {challenges.map((challenge) => (
               <article
                 key={challenge.id}
                 className="rounded-[22px] border border-white/55 bg-white/36 p-4 dark:border-white/8 dark:bg-white/[0.03]"
@@ -413,8 +419,15 @@ export function CompareView({
                   View challenge
                 </Button>
               </article>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              icon={Target}
+              title="No shared challenges yet"
+              description="Create a supportive challenge from Goals when you are ready to train toward something together."
+            />
+          )}
         </GlassCard>
 
         <GlassCard className="p-5 sm:p-6">

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { WORKOUT_TYPES } from "@/lib/workout-types";
 
 const optionalNumber = (minimum = 0, maximum = Number.MAX_SAFE_INTEGER) =>
   z
@@ -96,7 +97,7 @@ export const workoutSchema = z
       .union([z.string().time(), z.string().datetime({ offset: true }), z.literal("")])
       .optional(),
     name: z.string().trim().min(2, "Name your workout").max(100),
-    workoutType: z.string().trim().min(1).max(50),
+    workoutType: z.enum(WORKOUT_TYPES),
     status: z.enum(["planned", "completed", "skipped"]).default("completed"),
     notes: z.string().trim().max(4000).optional(),
     perceivedDifficulty: optionalNumber(1, 10),
@@ -276,7 +277,7 @@ export const settingsSchema = z.object({
 
 export const workoutTemplateSchema = z.object({
   name: z.string().trim().min(2).max(120),
-  workoutType: z.string().trim().min(1).max(50),
+  workoutType: z.enum(WORKOUT_TYPES),
   notes: z.string().trim().max(3000).optional(),
   visibility: z.enum(["private", "partner"]).default("private"),
   exercises: z.array(workoutExerciseSchema).min(1).max(60),

@@ -20,13 +20,12 @@ import {
   metersToDisplay,
   type UnitPreference,
 } from "@/lib/units";
+import { normalizeWorkoutType } from "@/lib/workout-types";
 
 function workoutType(value: string) {
-  const normalized = value.toLowerCase();
-  if (["skill", "mobility", "conditioning", "recovery", "mixed"].includes(normalized)) {
-    return normalized;
-  }
-  return "strength";
+  const normalized = normalizeWorkoutType(value);
+  if (!normalized) throw new Error("Unsupported workout type.");
+  return normalized;
 }
 
 function localDateTimeToIso(date: string, time: string) {
@@ -132,6 +131,7 @@ export function WorkoutFormContainer({
     }));
 
   const save = async (values: WorkoutFormValues) => {
+    const normalizedWorkoutType = workoutType(values.type);
     const supabase = createClient();
     let photoPath = values.removePhoto ? undefined : existingPhotoPath;
     let uploadedPhotoPath: string | undefined;
@@ -209,7 +209,7 @@ export function WorkoutFormContainer({
       startTime: localDateTimeToIso(values.date, values.startTime),
       endTime: localDateTimeToIso(values.date, values.endTime),
       name: values.name,
-      workoutType: workoutType(values.type),
+      workoutType: normalizedWorkoutType,
       notes: values.notes,
       perceivedDifficulty: values.difficulty,
       energyLevel: values.energy,
@@ -266,12 +266,13 @@ export function WorkoutFormContainer({
   };
 
   const saveTemplate = async (values: WorkoutFormValues) => {
+    const normalizedWorkoutType = workoutType(values.type);
     const response = await fetch("/api/templates", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         name: values.name,
-        workoutType: workoutType(values.type),
+        workoutType: normalizedWorkoutType,
         notes: values.notes,
         visibility: "private",
         exercises: canonicalExercises(values),

@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { useUnitPreference } from "@/components/unit-preference-provider";
 import { GlassCard, PageHeader } from "@/components/ui/primitives";
+import { localDateInputValue } from "@/lib/local-date";
 import {
   displayWeightToKilograms,
   storedWeightToDisplay,
@@ -114,7 +115,7 @@ export function GoalForm({
 }) {
   const router = useRouter();
   const unitPreference = useUnitPreference();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localDateInputValue();
   const displayInitialValues: Partial<Input> =
     initialValues?.goalType === "added_weight"
       ? {

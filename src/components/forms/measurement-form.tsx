@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/client";
 import { buildPrivateMediaPath, validateMediaFile } from "@/lib/uploads";
+import { localDateInputValue } from "@/lib/local-date";
 import { GlassCard, PageHeader } from "@/components/ui/primitives";
 import { useUnitPreference } from "@/components/unit-preference-provider";
 import {
@@ -121,7 +122,7 @@ export function MeasurementForm() {
   } = useForm<FormInput, unknown, FormOutput>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      measuredAt: new Date().toISOString().slice(0, 10),
+      measuredAt: localDateInputValue(),
       visibility: "private",
       notes: "",
     },
