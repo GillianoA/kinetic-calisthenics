@@ -46,6 +46,7 @@ import {
   type UnitPreference,
   weightUnit,
 } from "@/lib/units";
+import { localDateInputValue } from "@/lib/local-date";
 
 const optionalBounded = (max: number) =>
   z.number().min(0).max(max).optional();
@@ -657,7 +658,7 @@ export function WorkoutLogForm({
   hasExistingPhoto?: boolean;
 }) {
   const unitPreference = useUnitPreference();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localDateInputValue();
   const activeWorkoutFormSchema = useMemo(
     () => createWorkoutFormSchema(unitPreference),
     [unitPreference],

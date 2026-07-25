@@ -8,6 +8,10 @@ import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { GlassCard, PageHeader } from "@/components/ui/primitives";
+import {
+  localDateInputValue,
+  localDateInputValueAfter,
+} from "@/lib/local-date";
 
 const schema = z
   .object({
@@ -63,10 +67,9 @@ const metricDetails = {
 
 export function ChallengeForm() {
   const router = useRouter();
-  const today = new Date().toISOString().slice(0, 10);
-  const nextMonthDate = new Date();
-  nextMonthDate.setUTCDate(nextMonthDate.getUTCDate() + 30);
-  const nextMonth = nextMonthDate.toISOString().slice(0, 10);
+  const now = new Date();
+  const today = localDateInputValue(now);
+  const nextMonth = localDateInputValueAfter(30, now);
   const {
     register,
     handleSubmit,

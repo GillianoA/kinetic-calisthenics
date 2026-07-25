@@ -16,22 +16,20 @@ export async function POST(request: Request) {
   if (!body.ok) return body.response;
   const parsed = schema.safeParse(body.data);
   if (!parsed.success) return validationError(parsed.error.issues);
-  const { data: partnerId } = await supabase.rpc("get_my_partner_id");
-  if (!partnerId) return Response.json({ error: "No connected partner." }, { status: 409 });
-  const { data, error } = await supabase
-    .from("activity_feed")
-    .insert({
-      user_id: user.id,
-      activity_type: "encouragement",
-      entity_type: "profile",
-      entity_id: partnerId,
-      title: parsed.data.encouragement,
-      message: "A private encouragement from your accountability partner.",
-      metadata: { recipient_id: partnerId, encouragement: parsed.data.encouragement },
-      visibility: "partner",
-    })
-    .select("id")
-    .single();
-  if (error) return Response.json({ error: "Encouragement could not be sent." }, { status: 400 });
-  return Response.json({ id: data.id }, { status: 201 });
+  const { data, error } = await supabase.rpc("send_encouragement", {
+    p_encouragement: parsed.data.encouragement,
+  });
+  if (error?.code === "P0002") {
+    return Response.json({ error: "No connected partner." }, { status: 409 });
+  }
+  if (error?.code === "57014") {
+    return Response.json(
+      { error: "Encouragement limit reached; try again later." },
+      { status: 429 },
+    );
+  }
+  if (error) {
+    return Response.json({ error: "Encouragement could not be sent." }, { status: 400 });
+  }
+  return Response.json({ id: data }, { status: 201 });
 }

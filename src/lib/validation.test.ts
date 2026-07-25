@@ -99,6 +99,24 @@ describe("workout validation", () => {
     expect(parsed.exercises[0].sets[0].addedWeight).toBeUndefined();
   });
 
+  it.each(["push", "pull", "legs"] as const)(
+    "accepts the visible %s workout type as its own persisted value",
+    (workoutType) => {
+      const parsed = workoutSchema.parse({ ...validWorkout(), workoutType });
+
+      expect(parsed.workoutType).toBe(workoutType);
+    },
+  );
+
+  it("rejects unsupported workout types before they reach PostgreSQL", () => {
+    expect(
+      workoutSchema.safeParse({
+        ...validWorkout(),
+        workoutType: "unsupported",
+      }).success,
+    ).toBe(false);
+  });
+
   it("rejects an end time before the start time", () => {
     const workout = validWorkout();
     workout.endTime = "17:59";

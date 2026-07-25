@@ -253,7 +253,7 @@ values (
   'automatic'
 );
 
-select extensions.plan(35);
+select extensions.plan(37);
 
 set local role authenticated;
 select set_config(
@@ -491,29 +491,13 @@ select extensions.throws_ok(
       'partner'
     )$$,
   '42501',
-  'new row violates row-level security policy for table "activity_feed"',
-  'a client cannot forge a derived achievement in the activity feed'
+  'permission denied for table activity_feed',
+  'authenticated clients cannot insert directly into the activity feed'
 );
 
-select extensions.lives_ok(
-  $$insert into public.activity_feed (
-      user_id,
-      activity_type,
-      entity_type,
-      entity_id,
-      title,
-      metadata,
-      visibility
-    ) values (
-      'd0000000-0000-4000-8000-000000000001',
-      'encouragement',
-      'profile',
-      'd0000000-0000-4000-8000-000000000002',
-      'Strong work',
-      '{"recipient_id":"d0000000-0000-4000-8000-000000000002"}',
-      'partner'
-    )$$,
-  'a client can send one of the bounded partner encouragements'
+select extensions.ok(
+  public.send_encouragement('Strong work') is not null,
+  'an authenticated user can send a bounded encouragement through the RPC'
 );
 
 select extensions.ok(
@@ -534,6 +518,32 @@ select extensions.ok(
     limit 1
   ),
   'encouragement text, metadata, and timestamps are server-controlled'
+);
+
+select extensions.throws_ok(
+  $$select public.send_encouragement('Free-form message')$$,
+  '22023',
+  'Unsupported encouragement',
+  'the encouragement RPC rejects text outside the product vocabulary'
+);
+
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"e0000000-0000-4000-8000-000000000001","role":"authenticated"}',
+  true
+);
+
+select extensions.throws_ok(
+  $$select public.send_encouragement('Respect')$$,
+  'P0002',
+  'No connected partner',
+  'an unrelated user cannot choose or reach another recipient'
+);
+
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"d0000000-0000-4000-8000-000000000001","role":"authenticated"}',
+  true
 );
 
 select extensions.throws_ok(

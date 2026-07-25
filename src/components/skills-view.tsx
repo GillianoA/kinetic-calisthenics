@@ -29,6 +29,7 @@ import {
   YAxis,
 } from "recharts";
 import { skills as demoSkills, type SkillSummary } from "@/lib/demo-data";
+import { milestoneTimelineDetail } from "@/lib/skill-progress";
 import {
   Button,
   EmptyState,
@@ -183,7 +184,11 @@ function MilestoneTimeline({ skill }: { skill: SkillSummary }) {
               {milestone.label}
             </p>
             <p className="mt-1 text-[11px] text-slate-400">
-              {milestone.date ?? "Not reached yet"}
+              {milestoneTimelineDetail(
+                milestone,
+                index,
+                skill.completedStages,
+              )}
             </p>
           </div>
         </li>
