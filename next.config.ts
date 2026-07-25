@@ -11,6 +11,9 @@ function configuredSupabaseOrigins() {
   }
 }
 
+const developmentConnectSource =
+  process.env.NODE_ENV === "development" ? " ws://localhost:*" : "";
+
 const contentSecurityPolicy = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -23,7 +26,7 @@ const contentSecurityPolicy = [
   "font-src 'self' data:",
   "img-src 'self' data: blob: https://*.supabase.co",
   "media-src 'self' blob: https://*.supabase.co",
-  `connect-src 'self' ${configuredSupabaseOrigins().join(" ")} https://*.supabase.co wss://*.supabase.co ws://localhost:*`,
+  `connect-src 'self' ${configuredSupabaseOrigins().join(" ")} https://*.supabase.co wss://*.supabase.co${developmentConnectSource}`,
   "worker-src 'self' blob:",
   "manifest-src 'self'",
 ].join("; ");
